@@ -1,0 +1,24 @@
+# Changes here will be overwritten by Copier
+_commit: v2.0.7
+_src_path: gh:lincc-frameworks/python-project-template
+author_email: lincc-frameworks-team@lists.lsst.org
+author_name: LINCC Frameworks
+create_example_module: true
+custom_install: true
+enforce_style:
+- pylint
+- black
+- isort
+failure_notification: []
+include_benchmarks: false
+include_docs: false
+mypy_type_checking: none
+package_name: lsdb_crossmatch
+project_license: BSD
+project_name: lsdb-crossmatch
+project_organization: astronomy-commons
+python_versions:
+- '3.10'
+- '3.11'
+- '3.12'
+test_lowest_version: direct
