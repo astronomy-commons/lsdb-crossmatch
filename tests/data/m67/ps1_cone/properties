@@ -1,0 +1,17 @@
+#HATS catalog
+obs_collection=otmo
+dataproduct_type=object
+hats_nrows=156595
+hats_col_ra=raMean
+hats_col_dec=decMean
+hats_npix_suffix=.parquet
+hats_skymap_order=8
+hats_builder=lsdb v0.6.1.dev16+g47e97927, hats v0.7.dev4+gf05fdf2a
+hats_creation_date=2024-12-11T19\:35UTC
+hats_estsize=2916861370
+hats_release_date=2024-09-18
+hats_version=v0.1
+hats_cols_sort=objID
+hats_cols_survey_id=objID
+hats_max_rows=102468
+hats_order=7
