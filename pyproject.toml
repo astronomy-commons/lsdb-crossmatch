@@ -17,7 +17,7 @@ classifiers = [
 dynamic = ["version"]
 requires-python = ">=3.10"
 dependencies = [
-    "lsdb>=0.5.0",
+    "lsdb>=0.6.0",
 ]
 
 [project.urls]
