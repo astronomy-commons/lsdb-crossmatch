@@ -26,4 +26,4 @@ def test_mag_difference_crossmatch(m67_delve_small_dir, m67_ps1_small_dir, xmatc
         xmatch_row = xmatched[xmatched["objID_ps1"] == correct_row["id_ps1"]]
         assert xmatch_row["QUICK_OBJECT_ID_delve"].to_numpy() == correct_row["id_delve"]
         assert xmatch_row["_dist_arcsec"].to_numpy() == pytest.approx(correct_row["_dist_arcsec"])
-        assert xmatch_row["magnitude_difference"].to_numpy() == pytest.approx(correct_row["_mag_diff"])
+        assert xmatch_row["_magnitude_difference"].to_numpy() == pytest.approx(correct_row["_mag_diff"])
