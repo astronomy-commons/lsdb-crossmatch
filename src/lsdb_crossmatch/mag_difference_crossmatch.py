@@ -20,7 +20,7 @@ class MyCrossmatchAlgorithm(KdTreeCrossmatch):
     extra_columns = pd.DataFrame(
         {
             "_dist_arcsec": pd.Series(dtype=pd.ArrowDtype(pa.float64())),
-            "magnitude_difference": pd.Series(dtype=pd.ArrowDtype(pa.float64())),
+            "_magnitude_difference": pd.Series(dtype=pd.ArrowDtype(pa.float64())),
         }
     )
 
@@ -46,14 +46,14 @@ class MyCrossmatchAlgorithm(KdTreeCrossmatch):
     ) -> pd.DataFrame:
         all_matches_df["left_mag"] = self.left.iloc[all_matches_df["left_idx"]][left_mag_col].to_numpy()
         all_matches_df["right_mag"] = self.right.iloc[all_matches_df["right_idx"]][right_mag_col].to_numpy()
-        all_matches_df["magnitude_difference"] = np.abs(
+        all_matches_df["_magnitude_difference"] = np.abs(
             all_matches_df["right_mag"] - all_matches_df["left_mag"]
         )
         return all_matches_df
 
     def _select_best_matches(self, all_matches_df: pd.DataFrame) -> pd.DataFrame:
         best_match_indices_in_all_matches_df = all_matches_df.groupby("left_idx")[
-            "magnitude_difference"
+            "_magnitude_difference"
         ].idxmin()
         return all_matches_df.loc[best_match_indices_in_all_matches_df].reset_index(drop=True)
 
@@ -83,7 +83,7 @@ class MyCrossmatchAlgorithm(KdTreeCrossmatch):
                 pd.DataFrame(
                     {
                         "_dist_arcsec": pd.Series(dtype=pd.ArrowDtype(pa.float64())),
-                        "magnitude_difference": pd.Series(dtype=pd.ArrowDtype(pa.float64())),
+                        "_magnitude_difference": pd.Series(dtype=pd.ArrowDtype(pa.float64())),
                     }
                 ),
             )
@@ -104,12 +104,12 @@ class MyCrossmatchAlgorithm(KdTreeCrossmatch):
         final_left_indices = final_matches_df["left_idx"].to_numpy()
         final_right_indices = final_matches_df["right_idx"].to_numpy()
         final_distances = final_matches_df["arc_dist_arcsec"].to_numpy()
-        final_magnitude_differences = final_matches_df["magnitude_difference"].to_numpy()
+        final_magnitude_differences = final_matches_df["_magnitude_difference"].to_numpy()
 
         extra_columns = pd.DataFrame(
             {
                 "_dist_arcsec": pd.Series(final_distances, dtype=pd.ArrowDtype(pa.float64())),
-                "magnitude_difference": pd.Series(
+                "_magnitude_difference": pd.Series(
                     final_magnitude_differences, dtype=pd.ArrowDtype(pa.float64())
                 ),
             }
