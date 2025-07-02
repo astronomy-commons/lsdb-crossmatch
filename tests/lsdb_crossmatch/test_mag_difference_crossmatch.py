@@ -16,7 +16,7 @@ def test_mag_difference_crossmatch(m67_delve_small_dir, m67_ps1_small_dir, xmatc
         algorithm=MyCrossmatchAlgorithm,
         radius_arcsec=3600,
         left_mag_col="rMeanPSFMag",
-        right_mag_col="MAG_PSF_R"
+        right_mag_col="MAG_PSF_R",
     ).compute()
 
     assert isinstance(xmatched, npd.NestedFrame)

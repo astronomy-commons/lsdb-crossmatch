@@ -1,6 +1,6 @@
-import pandas as pd
 from pathlib import Path
 
+import pandas as pd
 import pytest
 from dask.distributed import Client, LocalCluster
 
