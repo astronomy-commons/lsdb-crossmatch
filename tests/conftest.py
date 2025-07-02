@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pandas as pd
 import pytest
 from dask.distributed import Client, LocalCluster
 
@@ -29,3 +30,18 @@ def m67_delve_dir(test_data_dir):
 @pytest.fixture
 def m67_ps1_dir(test_data_dir):
     return test_data_dir / "m67" / "ps1_cone"
+
+
+@pytest.fixture
+def m67_delve_small_dir(test_data_dir):
+    return test_data_dir / "m67" / "delve_cone_small"
+
+
+@pytest.fixture
+def m67_ps1_small_dir(test_data_dir):
+    return test_data_dir / "m67" / "ps1_cone_small"
+
+
+@pytest.fixture
+def xmatch_mags(test_data_dir):
+    return pd.read_csv(test_data_dir / "expected_results" / "xmatch_mags_rband.csv")
