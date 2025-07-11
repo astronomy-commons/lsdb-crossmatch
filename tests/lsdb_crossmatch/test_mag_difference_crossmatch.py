@@ -13,7 +13,7 @@ def test_mag_difference_crossmatch(m67_delve_small_dir, m67_ps1_small_dir, xmatc
         small_ps1,
         small_delve,
         suffixes=("_ps1", "_delve"),
-        algorithm=MyCrossmatchAlgorithm,
+        algorithm=MagnitudeDifferenceCrossmatch,
         radius_arcsec=3600,
         left_mag_col="rMeanPSFMag",
         right_mag_col="MAG_PSF_R",
