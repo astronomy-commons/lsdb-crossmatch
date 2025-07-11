@@ -2,7 +2,7 @@ import lsdb
 import nested_pandas as npd
 import pytest
 
-from lsdb_crossmatch.mag_difference_crossmatch import MyCrossmatchAlgorithm
+from lsdb_crossmatch.mag_difference_crossmatch import MagnitudeDifferenceCrossmatch
 
 
 def test_mag_difference_crossmatch(m67_delve_small_dir, m67_ps1_small_dir, xmatch_mags):
