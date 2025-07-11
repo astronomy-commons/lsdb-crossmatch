@@ -76,18 +76,6 @@ class MagnitudeDifferenceCrossmatch(KdTreeCrossmatch):
             max_distance=max_d_chord,
         )
 
-        if len(left_idx_all) == 0:
-            return (
-                np.array([], dtype=np.int64),
-                np.array([], dtype=np.int64),
-                pd.DataFrame(
-                    {
-                        "_dist_arcsec": pd.Series(dtype=pd.ArrowDtype(pa.float64())),
-                        "_magnitude_difference": pd.Series(dtype=pd.ArrowDtype(pa.float64())),
-                    }
-                ),
-            )
-
         arc_distances_all = np.degrees(2.0 * np.arcsin(0.5 * chord_distances_all)) * 3600
 
         all_matches_df = pd.DataFrame(
