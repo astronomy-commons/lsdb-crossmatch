@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from lsdb.catalog import Catalog
 
 
-class MyCrossmatchAlgorithm(KdTreeCrossmatch):
+class MagnitudeDifferenceCrossmatch(KdTreeCrossmatch):
     """Cross-matching algorithm that extends KdTreeCrossmatch to include
     magnitude difference calculations and filtering.
     """
