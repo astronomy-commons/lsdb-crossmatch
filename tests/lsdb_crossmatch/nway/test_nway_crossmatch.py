@@ -1,7 +1,6 @@
 import lsdb
 import nested_pandas as npd
 import pandas as pd
-import pytest
 
 from lsdb_crossmatch.nway.nway_crossmatch import NWAYCrossmatch
 
