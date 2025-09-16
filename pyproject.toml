@@ -33,6 +33,9 @@ dev = [
     "pytest",
     "pytest-cov", # Used to report total code coverage
 ]
+nway = [
+    "nway"
+]
 
 [build-system]
 requires = [
