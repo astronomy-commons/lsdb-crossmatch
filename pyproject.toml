@@ -32,6 +32,10 @@ dev = [
     "pylint", # Used for static linting of files
     "pytest",
     "pytest-cov", # Used to report total code coverage
+    "nway",
+]
+nway = [
+    "nway",
 ]
 
 [build-system]
