@@ -1,0 +1,1 @@
+lsdb @ git+https://github.com/astronomy-commons/lsdb.git@main
