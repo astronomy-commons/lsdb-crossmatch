@@ -57,17 +57,18 @@ class NWAYCrossmatch(AbstractCrossmatchAlgorithm):
 
     def __init__(
         self,
-        radius_arcsec,
-        pos_err_col_left=None,
-        pos_err_col_right=None,
-        ra_error_col_left=None,
-        dec_error_col_left=None,
-        ra_error_col_right=None,
-        dec_error_col_right=None,
+        *,
+        radius_arcsec: float,
+        pos_err_col_left: str = None,
+        pos_err_col_right: str = None,
+        ra_error_col_left: str = None,
+        dec_error_col_left: str = None,
+        ra_error_col_right: str = None,
+        dec_error_col_right: str = None,
         left_mag_columns: list = None,
         right_mag_columns: list = None,
-        prior_completeness=1,
-        match_flag=0,
+        prior_completeness: float = 1,
+        match_flag: int = 0,
     ):
         self.radius_arcsec = radius_arcsec
         self.pos_err_col_left = pos_err_col_left
@@ -200,9 +201,9 @@ class NWAYCrossmatch(AbstractCrossmatchAlgorithm):
         ]
 
         results = nway_match(tables, self.radius_arcsec, self.prior_completeness)
-        return self._clean_nway_results(results, left_catalog_name, right_catalog_name, self.match_flag)
+        return self._clean_nway_results(results, left_catalog_name, right_catalog_name)
 
-    def _clean_nway_results(self, results, left_catalog_name, right_catalog_name, match_flag):
+    def _clean_nway_results(self, results, left_catalog_name, right_catalog_name):
         old_sep_col_name = f"Separation_{left_catalog_name}_{right_catalog_name}"
 
         results = results.rename(columns={old_sep_col_name: "Catalog_separation"})
@@ -215,9 +216,9 @@ class NWAYCrossmatch(AbstractCrossmatchAlgorithm):
 
         results = results.query(f"{right_catalog_name} != -1")
 
-        if match_flag == 1:
+        if self.match_flag == 1:
             results = results.query("match_flag == 1")
-        elif match_flag == 2:
+        elif self.match_flag == 2:
             results = results.query("match_flag != 0")
 
         left_idx = results[left_catalog_name].to_numpy()

@@ -52,11 +52,11 @@ class MagnitudeDifferenceCrossmatch(KdTreeCrossmatch):
         all_matches_df: pd.DataFrame,
         left_df: npd.NestedFrame,
         right_df: npd.NestedFrame,
-        left_mag_col: str,
-        right_mag_col: str,
     ) -> pd.DataFrame:
-        all_matches_df["left_mag"] = left_df.iloc[all_matches_df["left_idx"]][left_mag_col].to_numpy()
-        all_matches_df["right_mag"] = right_df.iloc[all_matches_df["right_idx"]][right_mag_col].to_numpy()
+        all_matches_df["left_mag"] = left_df.iloc[all_matches_df["left_idx"]][self.left_mag_col].to_numpy()
+        all_matches_df["right_mag"] = right_df.iloc[all_matches_df["right_idx"]][
+            self.right_mag_col
+        ].to_numpy()
         all_matches_df["_magnitude_difference"] = np.abs(
             all_matches_df["right_mag"] - all_matches_df["left_mag"]
         )
@@ -68,10 +68,8 @@ class MagnitudeDifferenceCrossmatch(KdTreeCrossmatch):
         ].idxmin()
         return all_matches_df.loc[best_match_indices_in_all_matches_df].reset_index(drop=True)
 
-    # pylint: disable=arguments-differ
     def perform_crossmatch(
-        self,
-        crossmatch_args: CrossmatchArgs,
+        self, crossmatch_args: CrossmatchArgs
     ) -> tuple[np.ndarray, np.ndarray, pd.DataFrame]:
         max_d_chord = _get_chord_distance(self.radius_arcsec)
         min_d_chord = _get_chord_distance(self.min_radius_arcsec)
@@ -102,11 +100,7 @@ class MagnitudeDifferenceCrossmatch(KdTreeCrossmatch):
         )
 
         all_matches_df = self._calculate_magnitude_differences(
-            all_matches_df,
-            crossmatch_args.left_df,
-            crossmatch_args.right_df,
-            self.left_mag_col,
-            self.right_mag_col,
+            all_matches_df, crossmatch_args.left_df, crossmatch_args.right_df
         )
         final_matches_df = self._select_best_matches(all_matches_df)
 
