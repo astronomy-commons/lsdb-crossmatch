@@ -11,11 +11,7 @@ def test_mag_difference_crossmatch(m67_delve_small_dir, m67_ps1_small_dir, xmatc
     small_ps1 = lsdb.open_catalog(m67_ps1_small_dir)
     small_delve = lsdb.open_catalog(m67_delve_small_dir)
 
-    xmatched = lsdb.crossmatch(
-        small_ps1,
-        small_delve,
-        suffixes=("_ps1", "_delve"),
-        algorithm=NWAYCrossmatch,
+    algorithm = NWAYCrossmatch(
         radius_arcsec=60,
         left_mag_columns=["gMeanPSFMag", "rMeanPSFMag", "iMeanPSFMag", "zMeanPSFMag"],
         right_mag_columns=["MAG_PSF_G", "MAG_PSF_R", "MAG_PSF_I", "MAG_PSF_Z"],
@@ -24,6 +20,10 @@ def test_mag_difference_crossmatch(m67_delve_small_dir, m67_ps1_small_dir, xmatc
         ra_error_col_right="MAGERR_PSF_G",  ## Well beans
         dec_error_col_right="MAGERR_PSF_I",
         match_flag=2,
+    )
+
+    xmatched = lsdb.crossmatch(
+        small_ps1, small_delve, suffixes=("_ps1", "_delve"), algorithm=algorithm
     ).compute()
 
     assert isinstance(xmatched, npd.NestedFrame)

@@ -9,14 +9,15 @@ def test_mag_difference_crossmatch(m67_delve_small_dir, m67_ps1_small_dir, xmatc
     small_ps1 = lsdb.open_catalog(m67_ps1_small_dir)
     small_delve = lsdb.open_catalog(m67_delve_small_dir)
 
+    algorithm = MagnitudeDifferenceCrossmatch(
+        radius_arcsec=3600, left_mag_col="rMeanPSFMag", right_mag_col="MAG_PSF_R"
+    )
+
     xmatched = lsdb.crossmatch(
         small_ps1,
         small_delve,
         suffixes=("_ps1", "_delve"),
-        algorithm=MagnitudeDifferenceCrossmatch,
-        radius_arcsec=3600,
-        left_mag_col="rMeanPSFMag",
-        right_mag_col="MAG_PSF_R",
+        algorithm=algorithm,
     ).compute()
 
     assert isinstance(xmatched, npd.NestedFrame)
