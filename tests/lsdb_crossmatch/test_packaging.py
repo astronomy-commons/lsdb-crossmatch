@@ -1,3 +1,5 @@
+from citation_compass import find_in_citations
+
 import lsdb_crossmatch
 
 
@@ -8,7 +10,6 @@ def test_version():
 
 def test_citation_compass_integration():
     """Check to see that the package is properly integrated with the citation compass."""
-    from citation_compass import find_in_citations
 
     # HATS and LSDB should always be cited when lsdb_crossmatch is imported.
     assert len(find_in_citations("LSDB - Caplar et. al. 2025")) > 0
