@@ -2,6 +2,7 @@ import hats.pixel_math.healpix_shim as hp
 import numpy as np
 import pandas as pd
 import pyarrow as pa
+from citation_compass import CiteClass
 from lsdb.core.crossmatch.abstract_crossmatch_algorithm import AbstractCrossmatchAlgorithm
 from lsdb.core.crossmatch.crossmatch_args import CrossmatchArgs
 from nwaylib import nway_match
@@ -12,10 +13,12 @@ def _series_of(pa_dtype):
 
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-branches,too-many-locals
-class NWAYCrossmatch(AbstractCrossmatchAlgorithm):
+class NWAYCrossmatch(AbstractCrossmatchAlgorithm, CiteClass):
     """
     Nway crossmatch algorithm.
 
+    Attributes
+    ----------
     match_tables: list of catalogues, each a dict with entries:
     - name (short catalog name, no spaces, used in output columns)
     - ra (RA in degrees)
@@ -38,6 +41,12 @@ class NWAYCrossmatch(AbstractCrossmatchAlgorithm):
         that are expected to have a counterpart (e.g., 90%).
         If an array is passed, completeness for each catalog. First
         entry has to be 1.
+
+    Citations
+    ---------
+    NWAY cross match - Salvato et al., MNRAS, 2018 (ArXiV: https://arxiv.org/abs/1705.10711,
+        https://ui.adsabs.harvard.edu/abs/2018MNRAS.473.4937S/abstract)
+        https://github.com/JohannesBuchner/nway
     """
 
     extra_columns = pd.DataFrame(
