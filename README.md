@@ -27,14 +27,7 @@ If you use HATS / LSDB in your work, please cite the conference proceedings:
 
 If you use Rubin Data Preview 1 (DP1) with HATS, please also cite: ["Variability-finding in Rubin Data Preview 1 with LSDB"](https://ui.adsabs.harvard.edu/abs/2025arXiv250623955M).
 
-When using a cross-matching algorithm from another author, please cite the algorithm appropriately. This package uses [CitationCompass](https://github.com/lincc-frameworks/citation-compass) to track the annotated algorithms that are used. You can run:
-
-```
-citation_list = get_used_citations()
-```
-
-to get a list of the annotated algorithms that were used during a run. Note that CitationCompass is still experimental and relies on developers to explicitly annotate the functions. You should always double check the algorithms used.
-
+When using a cross-matching algorithm from another author, please cite the algorithm appropriately.
 
 ## Acknowledgements
 
