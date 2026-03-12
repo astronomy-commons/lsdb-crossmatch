@@ -1,5 +1,6 @@
-from ._version import __version__
 from citation_compass import cite_inline
+
+from ._version import __version__
 
 __all__ = ["__version__"]
 
