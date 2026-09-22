@@ -215,6 +215,12 @@ class NWAYCrossmatch(AbstractCrossmatchAlgorithm, CiteClass):
 
         results = results.rename(columns={old_sep_col_name: "Catalog_separation"})
 
+        # Under pandas 3, nway's internal groupby-apply no longer keeps the primary
+        # catalog's row index as a regular column (the grouping column is dropped from
+        # the output); it's only available as a named index level. Pull it back into a
+        # column so the lookup below finds it.
+        results = results.reset_index(level=left_catalog_name)
+
         for col_name, expected_dtype in self.extra_columns.dtypes.items():
             if col_name in results.columns and results[col_name].dtype != expected_dtype:
                 results[col_name] = results[col_name].astype(expected_dtype)
