@@ -1,16 +1,17 @@
 # Changes here will be overwritten by Copier
-_commit: v2.2.0
+_commit: v2.3.3
 _src_path: gh:lincc-frameworks/python-project-template
 author_email: lincc-frameworks-team@lists.lsst.org
 author_name: LINCC Frameworks
 create_example_module: false
-custom_install: custom
+custom_install: library
 enforce_style:
 - pylint
 - black
 - isort
 failure_notification: []
 include_benchmarks: false
+include_dev_guide: false
 include_docs: false
 mypy_type_checking: none
 package_name: lsdb_crossmatch
