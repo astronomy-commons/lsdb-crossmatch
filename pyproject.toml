@@ -57,6 +57,7 @@ testpaths = [
     "docs",
 ]
 addopts = "--doctest-modules --doctest-glob=*.rst"
+log_cli_level = "INFO"
 
 [tool.black]
 line-length = 110
