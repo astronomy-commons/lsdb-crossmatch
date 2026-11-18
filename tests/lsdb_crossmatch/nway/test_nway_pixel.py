@@ -155,12 +155,127 @@ def test_drops_rows_without_any_counterpart(three_catalogs):
     assert (secondaries != -1).any(axis=0).all()
 
 
-def test_empty_secondaries_return_empty(three_catalogs):
+@pytest.mark.parametrize("empty_catalogs", [(1, 2), (0,), (0, 1, 2)])
+def test_empty_result_has_same_columns_as_real_result(three_catalogs, empty_catalogs):
+    """lsdb needs every partition to have the same columns, also empty ones."""
     frames, configs = three_catalogs
-    empty = [frames[0], frames[1].iloc[0:0], frames[2].iloc[0:0]]
-    indices, extra = nway_crossmatch_pixel(empty, configs, ALIGNED_ORDER, radius_arcsec=5)
+    _, real = nway_crossmatch_pixel(frames, configs, ALIGNED_ORDER, radius_arcsec=5)
+
+    emptied = [frame.iloc[0:0] if k in empty_catalogs else frame for k, frame in enumerate(frames)]
+    indices, extra = nway_crossmatch_pixel(emptied, configs, ALIGNED_ORDER, radius_arcsec=5)
+
     assert all(len(idx) == 0 for idx in indices)
     assert len(extra) == 0
+    assert list(extra.columns) == list(real.columns)
+    assert (extra.dtypes == real.dtypes).all()
+
+
+def test_one_empty_secondary_matches_the_others(three_catalogs):
+    """nway itself fails on an empty catalog; we leave it out and report it as missing."""
+    frames, configs = three_catalogs
+    with_empty_c = [frames[0], frames[1], frames[2].iloc[0:0]]
+
+    with pytest.raises(IndexError):
+        tables = [build_nway_table(f, cfg, 1.0) for f, cfg in zip(with_empty_c, configs)]
+        nway_match(tables, 5, 0.9, store_mag_hists=False)
+
+    kwargs = {"radius_arcsec": 5, "prior_completeness": 0.9, "keep_unmatched": True}
+    indices, extra = nway_crossmatch_pixel(with_empty_c, configs, ALIGNED_ORDER, **kwargs)
+    _, real = nway_crossmatch_pixel(frames, configs, ALIGNED_ORDER, **kwargs)
+
+    # Same columns as when C has rows; C is reported as missing everywhere.
+    assert list(extra.columns) == list(real.columns)
+    assert (indices[2] == -1).all()
+    assert extra[["Separation_A_C", "Separation_B_C"]].isna().all().all()
+
+    # Equal to matching A and B alone, with B keeping its share of the completeness.
+    share = 0.9 ** (1 / 2)
+    two_indices, two_extra = nway_crossmatch_pixel(
+        frames[:2],
+        configs[:2],
+        ALIGNED_ORDER,
+        radius_arcsec=5,
+        prior_completeness=[1.0, share],
+        keep_unmatched=True,
+    )
+    assert np.array_equal(indices[0], two_indices[0])
+    assert np.array_equal(indices[1], two_indices[1])
+    for col in ("prob_has_match", "prob_this_match", "match_flag"):
+        assert np.allclose(extra[col], two_extra[col])
+
+
+def test_extra_columns_follow_nway(three_catalogs):
+    """Our fixed column list must match what nway actually returns."""
+    frames, configs = three_catalogs
+    _, extra = nway_crossmatch_pixel(frames, configs, ALIGNED_ORDER, radius_arcsec=5)
+    assert list(extra.columns) == [
+        "Separation_A_B",
+        "Separation_A_C",
+        "Separation_B_C",
+        "Separation_max",
+        "ncat",
+        "dist_bayesfactor_uncorrected",
+        "dist_bayesfactor",
+        "dist_post",
+        "p_single",
+        "match_flag",
+        "prob_has_match",
+        "prob_this_match",
+    ]
+
+
+def test_source_densities_make_results_independent_of_unrelated_rows(three_catalogs):
+    """With global densities, extra rows far from any primary source change nothing.
+
+    This is the situation of a secondary stored at a lower order than the aligned
+    pixel: its partition holds many rows outside the pixel. With the pixel area
+    instead of a global density, those rows inflate the density and the
+    probabilities change.
+    """
+    frames, configs = three_catalogs
+    rng = np.random.default_rng(7)
+    far_rows = pd.DataFrame(
+        {
+            "ra_b": 151.0 + rng.uniform(0, 0.5, 500),
+            "dec_b": 3.0 + rng.uniform(0, 0.5, 500),
+            "ra_err": 0.2,
+            "dec_err": 0.2,
+            "mag_b": 20.0,
+            "true_id": -1,
+        }
+    )
+    padded = [frames[0], pd.concat([frames[1], far_rows]), frames[2]]
+    densities = [3000.0, 9000.0, 1500.0]
+    kwargs = {"radius_arcsec": 5, "prior_completeness": 0.9, "keep_unmatched": True}
+
+    _, base = nway_crossmatch_pixel(frames, configs, ALIGNED_ORDER, source_densities=densities, **kwargs)
+    _, with_far = nway_crossmatch_pixel(padded, configs, ALIGNED_ORDER, source_densities=densities, **kwargs)
+    assert np.allclose(base["prob_has_match"], with_far["prob_has_match"])
+    assert np.allclose(base["prob_this_match"], with_far["prob_this_match"])
+
+    _, base_pixel = nway_crossmatch_pixel(frames, configs, ALIGNED_ORDER, **kwargs)
+    _, with_far_pixel = nway_crossmatch_pixel(padded, configs, ALIGNED_ORDER, **kwargs)
+    assert not np.allclose(base_pixel["prob_this_match"], with_far_pixel["prob_this_match"])
+
+
+def test_source_densities_reach_nway(three_catalogs, monkeypatch):
+    """The area handed to nway reproduces the given densities in nway's own formula."""
+    from lsdb_crossmatch.nway import nway_pixel  # pylint: disable=import-outside-toplevel
+
+    frames, configs = three_catalogs
+    densities = [3000.0, 9000.0, 1500.0]
+    seen = {}
+
+    def spy(tables, *args, **kwargs):
+        for i, table in enumerate(tables):
+            n = len(table["ra"])
+            # nway: primary uses n / area, secondaries (n + 1) / area
+            seen[table["name"]] = (n if i == 0 else n + 1) / table["area"]
+        return nway_match(tables, *args, **kwargs)
+
+    monkeypatch.setattr(nway_pixel, "nway_match", spy)
+    nway_crossmatch_pixel(frames, configs, ALIGNED_ORDER, radius_arcsec=5, source_densities=densities)
+    assert seen == pytest.approx(dict(zip(["A", "B", "C"], densities)))
 
 
 @pytest.mark.parametrize(
@@ -168,6 +283,9 @@ def test_empty_secondaries_return_empty(three_catalogs):
     [
         ({"radius_arcsec": -1}, "positive"),
         ({"radius_arcsec": 5, "match_flag": 3}, "match_flag"),
+        ({"radius_arcsec": 5, "source_densities": [1.0, 2.0]}, "source densities"),
+        ({"radius_arcsec": 5, "source_densities": [1.0, 0.0, 2.0]}, "positive"),
+        ({"radius_arcsec": 5, "prior_completeness": [1.0, 0.9]}, "one value per catalog"),
     ],
 )
 def test_invalid_arguments(three_catalogs, kwargs, message):
@@ -190,25 +308,28 @@ def test_invalid_configs(three_catalogs):
         nway_crossmatch_pixel(frames, [configs[0], configs[1], no_err], ALIGNED_ORDER, radius_arcsec=5)
 
 
-def test_prepare_primary_filters_to_smaller_aligned_pixel():
+@pytest.mark.parametrize("spatial_index_order", [29, 20])
+def test_prepare_primary_filters_to_smaller_aligned_pixel(spatial_index_order):
     rng = np.random.default_rng(0)
     ra = rng.uniform(150.0, 150.5, 500)
     dec = rng.uniform(2.0, 2.5, 500)
-    df = pd.DataFrame({"ra": ra, "dec": dec}, index=compute_spatial_index(ra, dec))
+    index = compute_spatial_index(ra, dec, spatial_index_order=spatial_index_order)
+    df = pd.DataFrame({"ra": ra, "dec": dec}, index=index)
 
     def pixel_of(index, order):
-        return np.asarray(index) >> (2 * (29 - order))
+        return np.asarray(index) >> (2 * (spatial_index_order - order))
 
     order = 6
     partition_pixel = HealpixPixel(order, int(np.bincount(pixel_of(df.index, order)).argmax()))
     partition = df[pixel_of(df.index, order) == partition_pixel.pixel]
 
+    kwargs = {"spatial_index_order": spatial_index_order}
     # Same-order alignment keeps everything.
-    assert len(prepare_primary(partition, partition_pixel, partition_pixel)) == len(partition)
+    assert len(prepare_primary(partition, partition_pixel, partition_pixel, **kwargs)) == len(partition)
 
     # A child pixel keeps only its own rows; the four children together keep them all.
     children = [HealpixPixel(order + 1, partition_pixel.pixel * 4 + k) for k in range(4)]
-    kept = [prepare_primary(partition, partition_pixel, child) for child in children]
+    kept = [prepare_primary(partition, partition_pixel, child, **kwargs) for child in children]
     assert sum(len(k) for k in kept) == len(partition)
     for child, rows in zip(children, kept):
         assert (pixel_of(rows.index, child.order) == child.pixel).all()
