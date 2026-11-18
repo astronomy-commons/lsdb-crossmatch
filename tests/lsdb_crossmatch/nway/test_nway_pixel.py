@@ -300,6 +300,11 @@ def test_invalid_configs(three_catalogs):
         nway_crossmatch_pixel(frames, [configs[0], configs[1], configs[1]], ALIGNED_ORDER, radius_arcsec=5)
     with pytest.raises(ValueError, match="frames"):
         nway_crossmatch_pixel(frames[:2], configs, ALIGNED_ORDER, radius_arcsec=5)
+    with pytest.raises(ValueError, match="at least two"):
+        nway_crossmatch_pixel(frames[:1], configs[:1], ALIGNED_ORDER, radius_arcsec=5)
+    spaced = NwayCatalogConfig(name="C c", ra_column="ra_c", dec_column="dec_c", pos_err_column="err")
+    with pytest.raises(ValueError, match="spaces"):
+        nway_crossmatch_pixel(frames, [configs[0], configs[1], spaced], ALIGNED_ORDER, radius_arcsec=5)
     missing = NwayCatalogConfig(name="C", ra_column="nope", dec_column="dec_c", pos_err_column="err")
     with pytest.raises(ValueError, match="missing columns"):
         nway_crossmatch_pixel(frames, [configs[0], configs[1], missing], ALIGNED_ORDER, radius_arcsec=5)
@@ -341,6 +346,9 @@ def test_prepare_secondary_concatenates_margin():
     assert prepare_secondary(main, margin)["x"].tolist() == [1, 2, 3]
     assert prepare_secondary(main, None)["x"].tolist() == [1, 2]
     assert prepare_secondary(main, margin.iloc[0:0])["x"].tolist() == [1, 2]
+    # Both empty: hand back the (empty) partition so the columns are kept.
+    assert list(prepare_secondary(main.iloc[0:0], None).columns) == ["x"]
+    assert list(prepare_secondary(None, margin.iloc[0:0]).columns) == ["x"]
 
 
 def test_magnitude_priors_are_applied():
