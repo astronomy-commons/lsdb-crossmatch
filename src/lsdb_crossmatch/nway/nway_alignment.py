@@ -142,10 +142,11 @@ def _extend_mapping(mapping: np.ndarray, step: PixelAlignment) -> np.ndarray:
     look that pixel up in ``mapping`` to find which pixel of every earlier
     catalog it came from, then append the new catalog's pixel and the new
     aligned pixel.
-    """
-    previous_aligned = mapping[-1]
-    previous_rows = {tuple(pixel): row for row, pixel in enumerate(previous_aligned)}
 
+    The lookup is vectorized: aligned pixels never overlap, so each one is
+    identified by its first index at order 29, and ``np.searchsorted`` finds the
+    matching row for every step pixel at once.
+    """
     step_primary = _column_pairs(
         step, PixelAlignment.PRIMARY_ORDER_COLUMN_NAME, PixelAlignment.PRIMARY_PIXEL_COLUMN_NAME
     )
@@ -158,13 +159,32 @@ def _extend_mapping(mapping: np.ndarray, step: PixelAlignment) -> np.ndarray:
 
     n_earlier = mapping.shape[0] - 1
     earlier = np.full((n_earlier, len(step_primary), 2), MISSING_PIXEL, dtype=np.int64)
-    for i, primary in enumerate(step_primary):
-        if tuple(primary) == MISSING_PIXEL:
-            # Only possible for OUTER: sky covered by the new catalog alone.
-            continue
-        earlier[:, i] = mapping[:n_earlier, previous_rows[tuple(primary)]]
+
+    # Primary is missing only for OUTER, on sky covered by the new catalog alone.
+    has_primary = step_primary[:, 0] != MISSING_PIXEL[0]
+    if has_primary.any():
+        previous_starts = _order29_starts(mapping[-1])
+        sort_order = np.argsort(previous_starts)
+        sorted_starts = previous_starts[sort_order]
+
+        primary_starts = _order29_starts(step_primary[has_primary])
+        positions = np.searchsorted(sorted_starts, primary_starts)
+        rows = sort_order[positions]
+        # Every primary pixel of the step must be one of the previous aligned pixels.
+        if not np.array_equal(mapping[-1][rows], step_primary[has_primary]):
+            raise ValueError(
+                "Pairwise alignment returned a primary pixel that is not in the previous aligned tree."
+            )
+        earlier[:, has_primary] = mapping[:n_earlier, rows]
 
     return np.concatenate([earlier, step_join[np.newaxis], step_aligned[np.newaxis]])
+
+
+def _order29_starts(pairs: np.ndarray) -> np.ndarray:
+    """First order-29 pixel index of each (order, pixel) pair."""
+    orders = pairs[:, 0]
+    pixels = pairs[:, 1]
+    return pixels << (2 * (29 - orders))
 
 
 def _column_pairs(alignment: PixelAlignment, order_column: str, pixel_column: str) -> np.ndarray:
